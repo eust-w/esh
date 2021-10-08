@@ -20,7 +20,7 @@ jobs:
       run: sudo apt install upx -y
 
     - name: build elf
-      run: mkdir pkg;cd builders;./build-all.sh;cd builders
+      run: mkdir pkg;cd builders;./build-all.sh
 
     - name: build rpm
       run: ls ./pkg
@@ -28,10 +28,10 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: v${{steps.version.outputs.value}}
         files: |
           pkg/esh-linux-amd64
           pkg/esh-linux-arm64
           pkg/esh-mac-amd64
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
