@@ -15,13 +15,13 @@ import (
 )
 
 const (
-	PasswordFlag string = "Password:"
+	PasswordFlag string = "assword:"
 	FailFlag     string = "denied"
 	SureFlag     string = "sure"
 )
 
-func Run(ip,user, password, port,cmds string, runFlag bool) error {
-	cmd := "ssh "+user+"@"+ip+" -p "+port+" "+cmds
+func Run(ip, user, password, port, cmds string, runFlag bool) error {
+	cmd := "ssh " + user + "@" + ip + " -p " + port + " " + cmds
 	shell, err := utils.Shell()
 
 	c := exec.Command(shell)
@@ -94,7 +94,7 @@ func enterPassword(ptmx *os.File, password string, runFlag bool) (string, error)
 				}
 				pwdChan <- data
 				break
-			} else if !entered && strings.Contains(data,SureFlag){
+			} else if !entered && strings.Contains(data, SureFlag) {
 				data = ""
 				_, err := ptmx.Write([]byte("yes" + "\n"))
 				if err != nil {
@@ -105,9 +105,9 @@ func enterPassword(ptmx *os.File, password string, runFlag bool) (string, error)
 	}()
 	select {
 	case newBuffered := <-pwdChan:
-		os.Stdout.WriteString(strings.TrimPrefix(newBuffered,"\r\n"))
+		os.Stdout.WriteString(strings.TrimPrefix(newBuffered, "\r\n"))
 		go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
-		if runFlag{
+		if runFlag {
 			_, _ = io.Copy(os.Stdout, ptmx)
 		}
 		return "", nil
@@ -116,9 +116,8 @@ func enterPassword(ptmx *os.File, password string, runFlag bool) (string, error)
 	}
 }
 
-
-func MultiRun(name,ip,user, password, port,cmds string, runFlag bool, outChan chan<- [2]string) error {
-	cmd := "ssh "+user+"@"+ip+" -p "+port+" "+cmds
+func MultiRun(name, ip, user, password, port, cmds string, runFlag bool, outChan chan<- [2]string) error {
+	cmd := "ssh " + user + "@" + ip + " -p " + port + " " + cmds
 	shell, err := utils.Shell()
 
 	c := exec.Command(shell)
@@ -162,7 +161,7 @@ func MultiRun(name,ip,user, password, port,cmds string, runFlag bool, outChan ch
 	return nil
 }
 
-func multiEnterPassword(ptmx *os.File, name,password string, runFlag bool,outChan chan<- [2]string) (string, error) {
+func multiEnterPassword(ptmx *os.File, name, password string, runFlag bool, outChan chan<- [2]string) (string, error) {
 	errChan := make(chan error)
 	pwdChan := make(chan string)
 	go func() {
@@ -179,7 +178,7 @@ func multiEnterPassword(ptmx *os.File, name,password string, runFlag bool,outCha
 				continue
 			}
 			data += string(buf[:n])
-			log.Println("yes:",data,[]byte(data),"end")
+			log.Println("yes:", data, []byte(data), "end")
 			if !entered && strings.Contains(data, PasswordFlag) {
 				entered = true
 				data = ""
@@ -194,7 +193,7 @@ func multiEnterPassword(ptmx *os.File, name,password string, runFlag bool,outCha
 				}
 				pwdChan <- data
 				break
-			} else if !entered && strings.Contains(data,SureFlag){
+			} else if !entered && strings.Contains(data, SureFlag) {
 				data = ""
 				_, err := ptmx.Write([]byte("yes" + "\n"))
 				if err != nil {
@@ -205,10 +204,10 @@ func multiEnterPassword(ptmx *os.File, name,password string, runFlag bool,outCha
 	}()
 	select {
 	case newBuffered := <-pwdChan:
-		outChan <- [2]string{name,strings.TrimPrefix(newBuffered,"\r\n")}
+		outChan <- [2]string{name, strings.TrimPrefix(newBuffered, "\r\n")}
 		//os.Stdout.WriteString(strings.TrimPrefix(newBuffered,"\r\n"))
 		go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
-		if runFlag{
+		if runFlag {
 			_, _ = io.Copy(os.Stdout, ptmx)
 		}
 		return "", nil
