@@ -6,11 +6,17 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 )
 
 var path = "/etc/esh.conf"
+
+func init() {
+	rootPath, _ := os.UserHomeDir()
+	path = filepath.Join(rootPath, "esh.conf")
+}
 
 const (
 	ConfigOK = iota

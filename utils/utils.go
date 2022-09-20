@@ -13,7 +13,7 @@ import (
 
 func Shell() (string, error) {
 	switch runtime.GOOS {
-	case "linux","openbsd","freebsd":
+	case "linux", "openbsd", "freebsd":
 		return NixShell()
 	case "android":
 		return AndroidShell()
@@ -40,7 +40,7 @@ func NixShell() (string, error) {
 }
 
 func AndroidShell() (string, error) {
-	shell := os.Getenv("SHELL");
+	shell := os.Getenv("SHELL")
 	if shell == "" {
 		return "", errors.New("SHELL not defined in android.")
 	}
@@ -64,9 +64,9 @@ func DarwinShell() (string, error) {
 	return shell, nil
 }
 
-func ByteXor(b1 ,b2 []byte) (out []byte){
-	for k,v := range b1{
-		out =append(out,v ^b2[k] )
+func ByteXor(b1, b2 []byte) (out []byte) {
+	for k, v := range b1 {
+		out = append(out, v^b2[k])
 	}
 	return
 }

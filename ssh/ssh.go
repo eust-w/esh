@@ -2,216 +2,116 @@ package ssh
 
 import (
 	"errors"
-	"esh/utils"
-	"github.com/creack/pty"
+	"fmt"
+	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
-	"io"
-	"log"
+	"net"
 	"os"
-	"os/exec"
-	"os/signal"
 	"strings"
-	"syscall"
 )
 
-const (
-	PasswordFlag string = "assword:"
-	FailFlag     string = "denied"
-	SureFlag     string = "sure"
-)
-
-func Run(ip, user, password, port, cmds string, runFlag bool) error {
-	cmd := "ssh " + user + "@" + ip + " -p " + port + " " + cmds
-	shell, err := utils.Shell()
-
-	c := exec.Command(shell)
-
-	ptmx, err := pty.Start(c)
-	if err != nil {
-		return err
+func Check(e error) {
+	if e != nil {
+		panic(e)
 	}
-	defer func() { _ = ptmx.Close() }()
+}
 
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGWINCH)
-	go func() {
-		for range ch {
-			if err := pty.InheritSize(os.Stdin, ptmx); err != nil {
-			}
-		}
-	}()
-	ch <- syscall.SIGWINCH
+type Server struct {
+	Username string //Username
+	IP       string //IP Address
+	Password string //Password
+	Port     string //Port
+	Client   *Client
+}
 
-	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		return err
+func NewServer(user, password, ip string, port string) *Server {
+	return &Server{Username: user, IP: ip, Port: port, Password: password}
+}
+func (sv *Server) Run(args []string) (string, error) {
+	command := strings.Join(args, " ")
+	runFlag := strings.Trim(command, "") == ""
+	if runFlag {
+		err := sv.RunTerminal()
+		return "", err
+	} else {
+		out, err := sv.RunCommand(command)
+		return out, err
 	}
-	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }()
+	//return "", errors.New("unknown run type")
+}
 
-	if _, err := ptmx.Write([]byte(cmd + "; exit\n")); err != nil {
-		return err
-	}
-	_, err = enterPassword(
-		ptmx,
-		password,
-		runFlag,
-	)
-	if err != nil {
-		return err
+func (sv *Server) RunTerminal() error {
+	//sv := Server{ServerName: "lt", Username: "root", IP: "172.20.1.34", Port: 22, Password: "password"}
+	config := &ssh.ClientConfig{
+		User: sv.Username,
+		Auth: []ssh.AuthMethod{
+			ssh.Password(sv.Password),
+		},
+		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
+			return nil
+		},
 	}
 
+	client, err := ssh.Dial("tcp", sv.IP+":"+sv.Port, config)
+	fmt.Println("Dial:", err)
+	Check(err)
+	defer client.Close()
+
+	session, err := client.NewSession()
+	fmt.Println("NewSession:", err)
+	Check(err)
+	defer session.Close()
+
+	fd := int(os.Stdin.Fd())
+	oldState, err := terminal.MakeRaw(fd)
+	fmt.Println("MakeRaw:", err)
+	fmt.Println("oldState:", oldState)
+	Check(err)
+
+	session.Stdout = os.Stdout
+	session.Stderr = os.Stderr
+	session.Stdin = os.Stdin
+
+	fd2 := int(os.Stdout.Fd())
+	termWidth, termHeight, err := terminal.GetSize(fd)
+	fmt.Println("GetSize:", termWidth, termHeight, err)
+	termWidth, termHeight, err2 := terminal.GetSize(fd2)
+	fmt.Println("GetSize:", termWidth, termHeight, err2)
+	Check(err2)
+
+	defer terminal.Restore(fd, oldState)
+
+	modes := ssh.TerminalModes{
+		ssh.ECHO:          1,
+		ssh.TTY_OP_ISPEED: 14400,
+		ssh.TTY_OP_OSPEED: 14400,
+	}
+
+	//err = session.RequestPty("xterm-256color", termHeight, termWidth, modes)
+	//err = session.RequestPty("ms-terminal", termHeight, termWidth, modes)
+	err = session.RequestPty("", termHeight, termWidth, modes)
+	fmt.Println("RequestPty:", err)
+	Check(err)
+
+	err = session.Shell()
+	fmt.Println("Shell:", err)
+	Check(err)
+
+	err = session.Wait()
+	fmt.Println("Wait:", err)
+	Check(err)
 	return nil
 }
 
-func enterPassword(ptmx *os.File, password string, runFlag bool) (string, error) {
-	errChan := make(chan error)
-	pwdChan := make(chan string)
-	go func() {
-		data := ""
-		buf := make([]byte, 4096000)
-		entered := false
-		for {
-			n, err := ptmx.Read(buf)
-			if err != nil {
-				errChan <- err
-				break
-			}
-			if n == 0 {
-				continue
-			}
-			data += string(buf[:n])
-			if !entered && strings.Contains(data, PasswordFlag) {
-				entered = true
-				data = ""
-				_, err := ptmx.Write([]byte(password + "\n"))
-				if err != nil {
-					return
-				}
-			} else if entered && len(data) > 5 {
-				if strings.Contains(data, PasswordFlag) || strings.Contains(data, FailFlag) {
-					errChan <- errors.New("connect fail")
-					break
-				}
-				pwdChan <- data
-				break
-			} else if !entered && strings.Contains(data, SureFlag) {
-				data = ""
-				_, err := ptmx.Write([]byte("yes" + "\n"))
-				if err != nil {
-					return
-				}
-			}
-		}
-	}()
-	select {
-	case newBuffered := <-pwdChan:
-		os.Stdout.WriteString(strings.TrimPrefix(newBuffered, "\r\n"))
-		go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
-		if runFlag {
-			_, _ = io.Copy(os.Stdout, ptmx)
-		}
-		return "", nil
-	case err := <-errChan:
-		return "", err
+func (sv *Server) RunCommand(cmd string) (string, error) {
+	if cmd == "" {
+		return "", errors.New("no cmd run")
 	}
-}
-
-func MultiRun(name, ip, user, password, port, cmds string, runFlag bool, outChan chan<- [2]string) error {
-	cmd := "ssh " + user + "@" + ip + " -p " + port + " " + cmds
-	shell, err := utils.Shell()
-
-	c := exec.Command(shell)
-
-	ptmx, err := pty.Start(c)
+	var err error
+	sv.Client, err = NewClient(sv.IP, sv.Port, sv.Username, sv.Password)
+	output, err := sv.Client.Output(cmd)
 	if err != nil {
-		return err
+		return string(output), err
 	}
-	defer func() { _ = ptmx.Close() }()
-
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGWINCH)
-	go func() {
-		for range ch {
-			if err := pty.InheritSize(os.Stdin, ptmx); err != nil {
-			}
-		}
-	}()
-	ch <- syscall.SIGWINCH
-
-	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		return err
-	}
-	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }()
-
-	if _, err := ptmx.Write([]byte(cmd + "; exit\n")); err != nil {
-		return err
-	}
-	_, err = multiEnterPassword(
-		ptmx,
-		name,
-		password,
-		runFlag,
-		outChan,
-	)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func multiEnterPassword(ptmx *os.File, name, password string, runFlag bool, outChan chan<- [2]string) (string, error) {
-	errChan := make(chan error)
-	pwdChan := make(chan string)
-	go func() {
-		data := ""
-		buf := make([]byte, 4096)
-		entered := false
-		for {
-			n, err := ptmx.Read(buf)
-			if err != nil {
-				errChan <- err
-				break
-			}
-			if n == 0 {
-				continue
-			}
-			data += string(buf[:n])
-			log.Println("yes:", data, []byte(data), "end")
-			if !entered && strings.Contains(data, PasswordFlag) {
-				entered = true
-				data = ""
-				_, err := ptmx.Write([]byte(password + "\n"))
-				if err != nil {
-					return
-				}
-			} else if entered && len(data) > 5 {
-				if strings.Contains(data, PasswordFlag) || strings.Contains(data, FailFlag) {
-					errChan <- errors.New("connect fail")
-					break
-				}
-				pwdChan <- data
-				break
-			} else if !entered && strings.Contains(data, SureFlag) {
-				data = ""
-				_, err := ptmx.Write([]byte("yes" + "\n"))
-				if err != nil {
-					return
-				}
-			}
-		}
-	}()
-	select {
-	case newBuffered := <-pwdChan:
-		outChan <- [2]string{name, strings.TrimPrefix(newBuffered, "\r\n")}
-		//os.Stdout.WriteString(strings.TrimPrefix(newBuffered,"\r\n"))
-		go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
-		if runFlag {
-			_, _ = io.Copy(os.Stdout, ptmx)
-		}
-		return "", nil
-	case err := <-errChan:
-		return "", err
-	}
+	return string(output), nil
 }

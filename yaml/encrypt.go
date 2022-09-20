@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 )
+
 //You can change this aes keys,
 //there is no limit to the keys number, but it must be  aes key!
 var keys = [...][]byte{
@@ -27,8 +28,8 @@ func AesEncrypt(data string) string {
 	var encrypted []byte
 	origData := []byte("\t\t" + data + "\t\t")
 	r := mrand.New(mrand.NewSource(time.Now().Unix()))
-	index := r.Intn(len(keys)-1)
-	key := utils.ByteXor(keys[index],keys[index+1])
+	index := r.Intn(len(keys) - 1)
+	key := utils.ByteXor(keys[index], keys[index+1])
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		panic(err)
@@ -43,13 +44,13 @@ func AesEncrypt(data string) string {
 	return hex.EncodeToString(encrypted)
 }
 
-func AesDecrypt(encrypted string) ([]string, error){
+func AesDecrypt(encrypted string) ([]string, error) {
 	for i, k := range keys[:len(keys)-1] {
-		key := utils.ByteXor(k,keys[i+1])
+		key := utils.ByteXor(k, keys[i+1])
 		decrypted, _ := hex.DecodeString(encrypted)
 		block, _ := aes.NewCipher(key)
 		if len(decrypted) < aes.BlockSize {
-			return  []string{}, errors.New("can't decrypt")
+			return []string{}, errors.New("can't decrypt")
 		}
 		iv := decrypted[:aes.BlockSize]
 		decrypted = decrypted[aes.BlockSize:]
@@ -64,5 +65,5 @@ func AesDecrypt(encrypted string) ([]string, error){
 			}
 		}
 	}
-	return []string{} , errors.New("can't decrypt")
+	return []string{}, errors.New("can't decrypt")
 }
