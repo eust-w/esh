@@ -32,7 +32,7 @@ jobs:
         files: |
           pkg/esh-linux-amd64
           pkg/esh-linux-arm64
-          pkg/esh-mac-amd6
+          pkg/esh-mac-amd64
           pkg/esh.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
