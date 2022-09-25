@@ -1,0 +1,41 @@
+name: Go
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+    
+    - name: install upx
+      run: sudo apt install upx -y
+      
+    - name: build elf
+      run: cd builders;./build-all.sh;cd builders
+      
+    - name: build rpm
+      run: ls ./pkg
+      
+    - name: 9. 创建GitHub Release
+      id: create_release
+      uses: actions/create-release@latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{steps.version.outputs.value}}
+        release_name: v${{steps.version.outputs.value}}
+        body: ${{steps.description.outputs.content}}
+        draft: false
+        prerelease: false
+        

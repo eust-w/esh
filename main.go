@@ -38,12 +38,10 @@ var clusterRunCmd = &cobra.Command{
 				return
 			}
 			name, args = args[0], args[1:]
-		}else if len(args) <=0{
+		} else if len(args) <= 0 {
 			fmt.Println("please enter commands")
 			return
 		}
-		command := strings.Join(args, " ")
-		runFlag := strings.Trim(command, "") == ""
 		names := strings.Split(k.GetCluster(name), ",")
 		ch := make(chan [2]string, len(names))
 		flag := make(chan bool, 1)
@@ -57,9 +55,14 @@ var clusterRunCmd = &cobra.Command{
 				}
 				ip, user, password, port := data[0], data[1], data[2], data[3]
 				flag <- true
-				if err := ssh.MultiRun(name, ip, user, password, port, command, runFlag, ch); err != nil {
+
+				s := ssh.NewServer(user, password, ip, port)
+				var out string
+				if out, err = s.Run(args); err != nil {
 					fmt.Println("Error: " + err.Error())
+					os.Exit(1)
 				}
+				fmt.Println(out)
 				<-flag
 			}()
 		}
@@ -176,12 +179,14 @@ var conCmd = &cobra.Command{
 			}
 			ip, user, password, port = data[0], data[1], data[2], data[3]
 		}
-		command := strings.Join(args, " ")
-		runFlag := strings.Trim(command, "") == ""
-		if err := ssh.Run(ip, user, password, port, command, runFlag); err != nil {
+		s := ssh.NewServer(user, password, ip, port)
+		var out string
+		var err error
+		if out, err = s.Run(args); err != nil {
 			fmt.Println("Error: " + err.Error())
 			os.Exit(1)
 		}
+		fmt.Println(out)
 	},
 }
 
