@@ -1,37 +1,44 @@
-## 🎉简介
-esh 是一个跨平台的ssh链接管理工具，简单且强大！
+[🇨🇳](README_CN.md)[中文](README_CN.md)
 
-## ⚡使用
-安装
-## 📜从源码安装
-二进制文件生成在 out 目录下。
+## 🎉Introduction
 
-## 📦下载安装
-x86-64 linux版本： [esh-linux-amd64](https://github.com/eust-w/esh/releases/download/v/esh-linux-amd64)
+esh is a cross-platform SSH link management tool that is simple yet powerful!
 
-arm-64 linux版本: [esh-linux-arm64](https://github.com/eust-w/esh/releases/download/v/esh-linux-arm64)
+## ⚡Usage
 
-x86-64 mac版本：[esh-mac-amd64](https://github.com/eust-w/esh/releases/download/v/esh-mac-amd64)
+### Installation
 
-x86-64 windows版本：[esh.exe](https://github.com/eust-w/esh/releases/download/v/esh.exe)
+#### 📜 Install from Source
 
-下载后可直接运行，注意!请通过命令行运行！
+The binary files are generated in the `out` directory.
 
-## 🌱交互
-esh	说明
+#### 📦 Download and Install
+
+- x86-64 Linux version: [esh-linux-amd64](https://github.com/eust-w/esh/releases)
+- ARM-64 Linux version: [esh-linux-arm64](https://github.com/eust-w/esh/releases)
+- x86-64 Mac version: [esh-mac-amd64](https://github.com/eust-w/esh/releases)
+- x86-64 Windows version: [esh.exe](https://github.com/eust-w/esh/releases)
+
+After downloading, you can run it directly. Note: Please run it via the command line!
+
+## 🌱Interaction
+
+esh command descriptions:
+
 ```
-  add         add remote ssh                                            
-  cluster     use connect to connect remote ssh or run command          
-  completion  generate the autocompletion script for the specified shell
-  del         del an remote ssh use name                                
-  help        Help about any command                                    
-  list        list remote ssh                                           
-  run         use connect to connect remote ssh or run command          
-  set         set global config 
+sql复制代码  add         Add remote SSH
+  cluster     Use connect to connect remote SSH or run command
+  completion  Generate the autocompletion script for the specified shell
+  del         Delete a remote SSH using its name
+  help        Help about any command
+  list        List remote SSH
+  run         Use connect to connect remote SSH or run command
+  set         Set global config 
 ```
 
-## ➕开发
-从Home/esh_config.yaml读取信息
-2. 密码和用户名ip可以用aes加密，应该至少有两个加解密aes密钥，随机选择(当前时间为随机种子)一个进行加密，根据开头的标识来进行解密判断，有一个root账户能看明文密码，密码为编译时的加盐值
-3. 应该有登录补全功能和必须输入密钥才能登录功能
-4. 可以像ssh一样能执行远程命令,且支持集群功能
+## ➕Development
+
+1. Read information from `Home/esh_config.yaml`.
+2. Passwords and usernames/IPs can be encrypted using AES. There should be at least two AES keys for encryption and decryption. Randomly select one (using the current time as the random seed) for encryption. Decryption is determined by the initial identifier. A root account can view the plaintext password, and the password is a salted value compiled at build time.
+3. There should be login auto-completion functionality and a feature that requires entering a key to log in.
+4. It should be able to execute remote commands like SSH and support cluster functionality.
