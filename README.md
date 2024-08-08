@@ -4,6 +4,14 @@
 
 esh is a cross-platform SSH link management tool designed to simplify and streamline the process of managing multiple SSH connections.It is simple yet powerful!
 
+## 📦FUnctionality
+esh aims to provide a powerful yet user-friendly tool for managing SSH connections. Its key features include:
+
+- `Centralized Management`: Add, list, delete, and configure SSH connections from a single interface.
+- `Security`: Encrypts passwords and usernames/IP addresses using AES encryption
+- `Convenience`: Supports autocompletion, login auto-completion and key-based login for added security.
+- `Automation`: Run commands on multiple remote servers simultaneously, useful for managing clusters.
+
 ## ⚡Usage
 It is particularly useful for developers and system administrators who frequently connect to various remote servers.
 
@@ -14,6 +22,7 @@ It is particularly useful for developers and system administrators who frequentl
 The binary files are generated in the `out` directory.
 
 #### 📦 Download and Install
+precompiled binaries for different platforms (Linux, Mac, Windows).
 
 - x86-64 Linux version: [esh-linux-amd64](https://github.com/eust-w/esh/releases)
 - ARM-64 Linux version: [esh-linux-arm64](https://github.com/eust-w/esh/releases)
@@ -43,6 +52,5 @@ sql复制代码
 ## ➕Development
 
 1. Read information from `Home/esh_config.yaml`.
-2. Passwords and usernames/IPs can be encrypted using AES. There should be at least two AES keys for encryption and decryption. Randomly select one (using the current time as the random seed) for encryption. Decryption is determined by the initial identifier. A root account can view the plaintext password, and the password is a salted value compiled at build time.
-3. There should be login auto-completion functionality and a feature that requires entering a key to log in.
-4. It should be able to execute remote commands like SSH and support cluster functionality.
+2. Passwords and usernames/IPs can be encrypted using AES. There should be at least two AES keys for encryption and decryption. Randomly select one (using the current time as the random seed) for encryption. Decryption is determined by the initial identifier. A root account can view the plaintext password, however the password is a salted value compiled at build time.
+3. supports login auto-completion and requires entering a key for login, ensuring secure access.
