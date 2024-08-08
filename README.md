@@ -2,9 +2,10 @@
 
 ## 🎉Introduction
 
-esh is a cross-platform SSH link management tool that is simple yet powerful!
+esh is a cross-platform SSH link management tool designed to simplify and streamline the process of managing multiple SSH connections.It is simple yet powerful!
 
 ## ⚡Usage
+It is particularly useful for developers and system administrators who frequently connect to various remote servers.
 
 ### Installation
 
@@ -19,21 +20,24 @@ The binary files are generated in the `out` directory.
 - x86-64 Mac version: [esh-mac-amd64](https://github.com/eust-w/esh/releases)
 - x86-64 Windows version: [esh.exe](https://github.com/eust-w/esh/releases)
 
-After downloading, you can run it directly. Note: Please run it via the command line!
+After downloading, you can run it directly from the command line. 
+
+Note: Please run it via the command line!
 
 ## 🌱Interaction
 
 esh command descriptions:
 
 ```
-sql复制代码  add         Add remote SSH
-  cluster     Use connect to connect remote SSH or run command
-  completion  Generate the autocompletion script for the specified shell
-  del         Delete a remote SSH using its name
-  help        Help about any command
-  list        List remote SSH
-  run         Use connect to connect remote SSH or run command
-  set         Set global config 
+sql复制代码  
+  add         Add a new remote SSH connection
+  cluster     Use this command to connect to remote SSH or execute commands across multiple SSH sessions
+  completion  Generate autocompletion scripts for the specified shell esh commands
+  del         Delete an existing SSH connection using its name.
+  help        Get detailed information about any esh command.
+  list        List remote SSH sessions
+  run         Connect to a remote SSH or run a command on it.
+  set         Configure global settings for esh.
 ```
 
 ## ➕Development
