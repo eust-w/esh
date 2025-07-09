@@ -206,8 +206,15 @@ var addCmd = &cobra.Command{
 		if user == "" {
 			user = k.GetGlobal(yaml.DefaultUser)
 		}
+		// decide auth: password or key file
 		password, _ := cmd.Flags().GetString("password")
-		if password == "" {
+		keyPath, _ := cmd.Flags().GetString("key")
+		if cmd.Flags().Changed("key") { // user specified -k even if empty
+			if keyPath == "" {
+				keyPath = "~/.ssh/id_rsa"
+			}
+			password = keyPath // store key path in place of password
+		} else if password == "" {
 			password = k.GetGlobal(yaml.DefaultPwd)
 		}
 		port, _ := cmd.Flags().GetString("port")
@@ -275,6 +282,9 @@ func init() {
 	addCmd.Flags().StringP("user", "u", "", "user")
 	addCmd.Flags().StringP("password", "p", "", "password")
 	addCmd.Flags().StringP("port", "o", "", "port")
+	addCmd.Flags().StringP("key", "k", "", "private key path (default ~/.ssh/id_rsa if omitted)")
+	// enable -k without value
+	addCmd.Flags().Lookup("key").NoOptDefVal = "~/.ssh/id_rsa"
 
 	conCmd.Flags().StringP("ip", "i", "", "ip")
 	conCmd.Flags().StringP("user", "u", "", "user")

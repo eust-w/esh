@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"path/filepath"
 )
 
 func Check(e error) {
@@ -38,12 +39,39 @@ func (sv *Server) Run(args []string) (string, error) {
 	}
 }
 
+// privateKeyAuth helper
+func privateKeyAuth(path string) (ssh.AuthMethod, error) {
+	if strings.HasPrefix(path, "~") {
+		home, _ := os.UserHomeDir()
+		path = filepath.Join(home, strings.TrimPrefix(path, "~/"))
+	}
+	key, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	signer, err := ssh.ParsePrivateKey(key)
+	if err != nil {
+		return nil, err
+	}
+	return ssh.PublicKeys(signer), nil
+}
+
 func (sv *Server) RunTerminal() error {
+	var authMethods []ssh.AuthMethod
+	if sv.Password != "" {
+		// detect key path vs password
+		if strings.HasPrefix(sv.Password, "/") || strings.HasPrefix(sv.Password, "~") {
+			if keyAuth, err := privateKeyAuth(sv.Password); err == nil {
+				authMethods = append(authMethods, keyAuth)
+			}
+		} else {
+			authMethods = append(authMethods, ssh.Password(sv.Password))
+		}
+	}
+
 	config := &ssh.ClientConfig{
 		User: sv.Username,
-		Auth: []ssh.AuthMethod{
-			ssh.Password(sv.Password),
-		},
+		Auth: authMethods,
 		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
 			return nil
 		},
